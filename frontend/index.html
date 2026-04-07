@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Monitor - Blog Feed</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .blog-card { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .status-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen font-sans">
+
+    <header class="border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-black tracking-tighter text-indigo-400">LIVE MONITOR</h1>
+                <p class="text-xs text-gray-500 uppercase tracking-widest">Real-time Blog Feed Activity</p>
+            </div>
+            <div id="ws-status" class="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-full border border-gray-700">
+                <span class="w-2 h-2 bg-red-500 rounded-full status-pulse"></span>
+                <span class="text-[10px] font-bold uppercase text-gray-400">Offline</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700">
+                <p class="text-gray-500 text-xs font-bold uppercase mb-1">Total Postingan</p>
+                <h2 id="stat-total" class="text-4xl font-black text-white">0</h2>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700">
+                <p class="text-gray-500 text-xs font-bold uppercase mb-1">Aktivitas Terakhir</p>
+                <h2 id="stat-last-act" class="text-lg font-bold text-indigo-400">Menunggu Data...</h2>
+            </div>
+            <div class="bg-indigo-600 p-6 rounded-2xl shadow-lg shadow-indigo-500/20">
+                <p class="text-indigo-200 text-xs font-bold uppercase mb-1">Panduan</p>
+                <p class="text-sm font-medium text-white">Lakukan POST/PUT/DELETE melalui <code class="bg-indigo-700 px-1 rounded">/docs</code></p>
+            </div>
+        </div>
+
+        <div id="feed-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+    </main>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+        const WS_URL = "ws://127.0.0.1:8000/ws/live";
+        let blogs = [];
+
+        // 1. Inisialisasi WebSocket
+        function initWebSocket() {
+            const socket = new WebSocket(WS_URL);
+            const statusIndicator = document.getElementById('ws-status');
+
+            socket.onopen = () => {
+                statusIndicator.innerHTML = `<span class="w-2 h-2 bg-green-500 rounded-full status-pulse"></span> <span class="text-[10px] font-bold uppercase text-green-500">Live Connection</span>`;
+            };
+
+            socket.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                handleLiveUpdate(msg);
+            };
+
+            socket.onclose = () => {
+                statusIndicator.innerHTML = `<span class="w-2 h-2 bg-red-500 rounded-full"></span> <span class="text-[10px] font-bold uppercase text-red-500">Reconnecting...</span>`;
+                setTimeout(initWebSocket, 2000);
+            };
+        }
+
+        // 2. Handle Update Data
+        function handleLiveUpdate(msg) {
+            const lastAct = document.getElementById('stat-last-act');
+            
+            if (msg.action === "CREATE") {
+                blogs.unshift(msg.data);
+                lastAct.innerText = "Postingan Baru";
+            } else if (msg.action === "UPDATE") {
+                const index = blogs.findIndex(b => b.id === msg.data.id);
+                if (index !== -1) blogs[index] = msg.data;
+                lastAct.innerText = "Postingan Diupdate";
+            } else if (msg.action === "DELETE") {
+                blogs = blogs.filter(b => b.id !== msg.blog_id);
+                lastAct.innerText = "Postingan Dihapus";
+            }
+            renderBlogs();
+        }
+
+        // 3. Render ke UI
+        function renderBlogs() {
+            const container = document.getElementById('feed-container');
+            document.getElementById('stat-total').innerText = blogs.length;
+
+            if (blogs.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-20 text-gray-600 font-medium border-2 border-dashed border-gray-800 rounded-3xl text-xl">Belum ada postingan. Silahkan buat di FastAPI Docs.</div>`;
+                return;
+            }
+
+            container.innerHTML = blogs.map(blog => `
+                <div class="blog-card bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden hover:border-indigo-500 transition-colors">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[10px] bg-gray-700 text-gray-400 px-2 py-1 rounded font-bold uppercase">ID: ${blog.id}</span>
+                            <span class="text-[10px] text-gray-500">${new Date(blog.created_at).toLocaleTimeString()}</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2 leading-tight">${blog.judul}</h3>
+                        <p class="text-gray-400 text-sm line-clamp-3">${blog.isi}</p>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-900/50 border-t border-gray-700 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-white text-xs">
+                            ${blog.author_nama.charAt(0)}
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-200">${blog.author_nama}</p>
+                            <p class="text-[10px] text-gray-500 uppercase">${blog.author_nim} | ${blog.author_kelas}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 4. Load Data Awal
+        async function loadInitialData() {
+            try {
+                const res = await fetch(`${API_URL}/api/blogs`);
+                blogs = await res.json();
+                blogs.reverse();
+                renderBlogs();
+            } catch (e) {
+                console.error("Gagal mengambil data awal");
+            }
+        }
+
+        window.onload = () => {
+            loadInitialData();
+            initWebSocket();
+        };
+    </script>
+</body>
+</html>
