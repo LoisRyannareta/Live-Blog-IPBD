@@ -138,6 +138,17 @@ async def delete_blog(blog_id: int, user=Depends(get_current_user)):
             return {"message": f"Blog {blog_id} deleted"}
     raise HTTPException(status_code=404, detail="Blog not found")
 
+@app.get("/health",)
+def health_check():
+    """
+    Mengecek apakah API berjalan dengan normal.
+    """
+    return {
+        "status": "healthy",
+        "timestamp": datetime.datetime.now().isoformat(),
+        "version": "1.0.0"
+    }
+
 @app.websocket("/ws/live")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
