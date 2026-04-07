@@ -3,46 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Monitor - Blog Feed</title>
+    <title>Live Monitor - Pink Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .blog-card { animation: slideIn 0.3s ease-out; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .blog-card { 
+            animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.3s ease;
+        }
+        
         @keyframes slideIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
         .status-pulse { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .pink-glow {
+            box-shadow: 0 0 15px rgba(244, 114, 182, 0.1);
+        }
+        
+        .pink-gradient {
+            background: linear-gradient(135deg, #f472b6 0%, #db2777 100%);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #f472b6; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen font-sans">
+<body class="bg-[#111111] text-rose-50 min-h-screen">
 
-    <header class="border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-50">
+    <header class="border-b border-rose-900/30 bg-black/40 backdrop-blur-xl sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-black tracking-tighter text-indigo-400">LIVE MONITOR</h1>
-                <p class="text-xs text-gray-500 uppercase tracking-widest">Real-time Blog Feed Activity</p>
+                <h1 class="text-2xl font-black tracking-tighter text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]">LIVE MONITOR</h1>
+                <p class="text-[10px] text-rose-300/60 uppercase tracking-[0.2em] font-bold">Real-time Pink Feed Activity</p>
             </div>
-            <div id="ws-status" class="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-full border border-gray-700">
-                <span class="w-2 h-2 bg-red-500 rounded-full status-pulse"></span>
-                <span class="text-[10px] font-bold uppercase text-gray-400">Offline</span>
+            <div id="ws-status" class="flex items-center gap-2 bg-rose-950/30 px-4 py-2 rounded-full border border-rose-500/30">
+                <span class="w-2 h-2 bg-rose-500 rounded-full status-pulse"></span>
+                <span class="text-[10px] font-bold uppercase text-rose-400">Offline</span>
             </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto p-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700">
-                <p class="text-gray-500 text-xs font-bold uppercase mb-1">Total Postingan</p>
+            <div class="bg-zinc-900/50 p-6 rounded-3xl border border-rose-900/20 pink-glow">
+                <p class="text-rose-400/60 text-xs font-bold uppercase mb-1 tracking-wider">Total Postingan</p>
                 <h2 id="stat-total" class="text-4xl font-black text-white">0</h2>
             </div>
-            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700">
-                <p class="text-gray-500 text-xs font-bold uppercase mb-1">Aktivitas Terakhir</p>
-                <h2 id="stat-last-act" class="text-lg font-bold text-indigo-400">Menunggu Data...</h2>
+            <div class="bg-zinc-900/50 p-6 rounded-3xl border border-rose-900/20 pink-glow">
+                <p class="text-rose-400/60 text-xs font-bold uppercase mb-1 tracking-wider">Aktivitas Terakhir</p>
+                <h2 id="stat-last-act" class="text-lg font-bold text-pink-400">Menunggu Data...</h2>
             </div>
-            <div class="bg-indigo-600 p-6 rounded-2xl shadow-lg shadow-indigo-500/20">
-                <p class="text-indigo-200 text-xs font-bold uppercase mb-1">Panduan</p>
-                <p class="text-sm font-medium text-white">Lakukan POST/PUT/DELETE melalui <code class="bg-indigo-700 px-1 rounded">/docs</code></p>
+            <div class="pink-gradient p-6 rounded-3xl shadow-lg shadow-pink-500/20">
+                <p class="text-pink-100 text-xs font-bold uppercase mb-1 tracking-wider">Panduan</p>
+                <p class="text-sm font-medium text-white">Lakukan CRUD melalui <code class="bg-white/20 px-1.5 py-0.5 rounded text-white">/docs</code></p>
             </div>
         </div>
 
@@ -55,13 +77,12 @@
         const WS_URL = "ws://127.0.0.1:8000/ws/live";
         let blogs = [];
 
-        // 1. Inisialisasi WebSocket
         function initWebSocket() {
             const socket = new WebSocket(WS_URL);
             const statusIndicator = document.getElementById('ws-status');
 
             socket.onopen = () => {
-                statusIndicator.innerHTML = `<span class="w-2 h-2 bg-green-500 rounded-full status-pulse"></span> <span class="text-[10px] font-bold uppercase text-green-500">Live Connection</span>`;
+                statusIndicator.innerHTML = `<span class="w-2 h-2 bg-pink-500 rounded-full status-pulse"></span> <span class="text-[10px] font-bold uppercase text-pink-400">Live Connection</span>`;
             };
 
             socket.onmessage = (event) => {
@@ -70,63 +91,60 @@
             };
 
             socket.onclose = () => {
-                statusIndicator.innerHTML = `<span class="w-2 h-2 bg-red-500 rounded-full"></span> <span class="text-[10px] font-bold uppercase text-red-500">Reconnecting...</span>`;
+                statusIndicator.innerHTML = `<span class="w-2 h-2 bg-zinc-600 rounded-full"></span> <span class="text-[10px] font-bold uppercase text-zinc-500">Reconnecting...</span>`;
                 setTimeout(initWebSocket, 2000);
             };
         }
 
-        // 2. Handle Update Data
         function handleLiveUpdate(msg) {
             const lastAct = document.getElementById('stat-last-act');
             
             if (msg.action === "CREATE") {
                 blogs.unshift(msg.data);
-                lastAct.innerText = "Postingan Baru";
+                lastAct.innerText = "Postingan Baru ✨";
             } else if (msg.action === "UPDATE") {
                 const index = blogs.findIndex(b => b.id === msg.data.id);
                 if (index !== -1) blogs[index] = msg.data;
-                lastAct.innerText = "Postingan Diupdate";
+                lastAct.innerText = "Postingan Diupdate ✏️";
             } else if (msg.action === "DELETE") {
                 blogs = blogs.filter(b => b.id !== msg.blog_id);
-                lastAct.innerText = "Postingan Dihapus";
+                lastAct.innerText = "Postingan Dihapus 🗑️";
             }
             renderBlogs();
         }
 
-        // 3. Render ke UI
         function renderBlogs() {
             const container = document.getElementById('feed-container');
             document.getElementById('stat-total').innerText = blogs.length;
 
             if (blogs.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-20 text-gray-600 font-medium border-2 border-dashed border-gray-800 rounded-3xl text-xl">Belum ada postingan. Silahkan buat di FastAPI Docs.</div>`;
+                container.innerHTML = `<div class="col-span-full text-center py-20 text-rose-300/30 font-medium border-2 border-dashed border-rose-900/30 rounded-[32px] text-xl">Belum ada postingan baru.</div>`;
                 return;
             }
 
             container.innerHTML = blogs.map(blog => `
-                <div class="blog-card bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden hover:border-indigo-500 transition-colors">
+                <div class="blog-card bg-zinc-900/40 rounded-[24px] border border-rose-900/20 overflow-hidden hover:border-pink-500/50 hover:bg-zinc-900/60 transition-all">
                     <div class="p-6">
                         <div class="flex justify-between items-start mb-4">
-                            <span class="text-[10px] bg-gray-700 text-gray-400 px-2 py-1 rounded font-bold uppercase">ID: ${blog.id}</span>
-                            <span class="text-[10px] text-gray-500">${new Date(blog.created_at).toLocaleTimeString()}</span>
+                            <span class="text-[9px] bg-pink-950/50 text-pink-400 px-2.5 py-1 rounded-full border border-pink-500/20 font-black uppercase tracking-tighter">ID: ${blog.id}</span>
+                            <span class="text-[10px] text-rose-300/40 font-bold font-mono">${new Date(blog.created_at).toLocaleTimeString()}</span>
                         </div>
-                        <h3 class="text-xl font-bold text-white mb-2 leading-tight">${blog.judul}</h3>
-                        <p class="text-gray-400 text-sm line-clamp-3">${blog.isi}</p>
+                        <h3 class="text-xl font-bold text-rose-50 mb-3 leading-tight tracking-tight">${blog.judul}</h3>
+                        <p class="text-rose-100/60 text-sm line-clamp-3 leading-relaxed">${blog.isi}</p>
                     </div>
-                    <div class="px-6 py-4 bg-gray-900/50 border-t border-gray-700 flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-white text-xs">
+                    <div class="px-6 py-4 bg-pink-950/10 border-t border-rose-900/10 flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl pink-gradient flex items-center justify-center font-black text-white text-sm shadow-lg shadow-pink-500/20">
                             ${blog.author_nama.charAt(0)}
                         </div>
                         <div>
-                            <p class="text-xs font-bold text-gray-200">${blog.author_nama}</p>
-                            <p class="text-[10px] text-gray-500 uppercase">${blog.author_nim} | ${blog.author_kelas}</p>
+                            <p class="text-xs font-bold text-rose-100">${blog.author_nama}</p>
+                            <p class="text-[9px] text-rose-400/60 font-bold uppercase tracking-widest">${blog.author_nim} • ${blog.author_kelas}</p>
                         </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        // 4. Load Data Awal
         async function loadInitialData() {
             try {
                 const res = await fetch(`${API_URL}/api/blogs`);
